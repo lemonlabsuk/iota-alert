@@ -1,4 +1,4 @@
-package io.lemonlabs.rest
+package io.lemonlabs.iota.alerter.rest
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
@@ -20,18 +20,6 @@ class RestApi(dynamoDbSubscriber: DynamoDbSubscriber) extends SprayJsonSupport {
             }
           }
         }
-      } ~
-      path("index.html") {
-        getFromFile("/work/poker-bot-server/src/main/resources/html/spectate.html")
-//        getFromResource("html/spectate.html")
-      } ~
-      pathPrefix("js") {
-        getFromDirectory("/work/poker-bot-server/target/scala-2.12/classes/js")
-//        getFromResourceDirectory("js")
-      } ~
-      pathPrefix("css") {
-        getFromDirectory("/work/poker-bot-server/src/main/resources/css")
-//        getFromResourceDirectory("css")
       }
     }
   }

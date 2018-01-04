@@ -30,7 +30,7 @@ git commit -am"Bump alerter to version $NEW_VER"
 git tag $NEW_VER
 
 # Upload to S3
-aws s3 cp "target/scala-2.12/iota-alerter-assembly-$NEW_VER.jar" "s3://iota-alert-releases/iota-alerter-$NEW_VER.jar"
+aws s3 cp "target/scala-2.12/iota-alert-website-assembly-$NEW_VER.jar" "s3://iota-alert-releases/iota-alert-website-$NEW_VER.jar"
 
 # Deploy!
 ../cloudformation/deploy_alerter.sh
