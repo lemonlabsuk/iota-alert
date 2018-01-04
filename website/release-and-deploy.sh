@@ -26,7 +26,7 @@ fi
 set -e
 
 # Commit new version to git!
-git commit -am"Bump alerter to version $NEW_VER"
+git commit -am"Bump website to version $NEW_VER"
 git tag $NEW_VER
 
 # Upload to S3
