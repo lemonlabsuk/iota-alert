@@ -28,6 +28,7 @@ set -e
 # Commit new version to git!
 git commit -am"Bump website to version $NEW_VER"
 git tag website-$NEW_VER
+git push --tags origin master
 
 # Upload to S3
 aws s3 cp "target/scala-2.12/iota-alert-website-assembly-$NEW_VER.jar" "s3://iota-alert-releases/iota-alert-website-$NEW_VER.jar"
