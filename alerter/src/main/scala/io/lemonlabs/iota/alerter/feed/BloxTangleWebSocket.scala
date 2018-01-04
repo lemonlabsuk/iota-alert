@@ -50,7 +50,6 @@ class BloxTangleWebSocket {
       case TextMessage.Strict(text) =>
         import spray.json._
         val update = text.parseJson.convertTo[TangleUpdate]
-        println("Tangle update: " + update.address)
         update
       case other =>
         throw new IllegalArgumentException(s"Invalid message: $other")

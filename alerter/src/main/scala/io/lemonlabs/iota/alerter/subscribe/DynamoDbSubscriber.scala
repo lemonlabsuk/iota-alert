@@ -4,13 +4,12 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.alpakka.dynamodb.impl.DynamoSettings
 import akka.stream.alpakka.dynamodb.scaladsl.{DynamoClient, DynamoImplicits}
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.Source
 import com.amazonaws.services.dynamodbv2.model._
 import io.lemonlabs.iota.alerter.email.EmailAlert
 import io.lemonlabs.iota.alerter.feed.TangleUpdate
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 
 class DynamoDbSubscriber()(implicit system: ActorSystem, materializer: Materializer) {
 
@@ -32,15 +31,7 @@ class DynamoDbSubscriber()(implicit system: ActorSystem, materializer: Materiali
     )
     .via(client.flow)
     .mapConcat(_.getItems.asScala.toVector)
-    .map { result =>
-      EmailAlert(
-        AlertSubscription(
-          result.get("Email").getS,
-          result.get("IotaAddress").getS
-        ),
-        tangleUpdate
-      )
-    }
+    .map(result => EmailAlert(result.get("Email").getS, tangleUpdate))
     .recoverWithRetries(1, {
       case t: Throwable =>
         t.printStackTrace()

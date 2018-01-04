@@ -4,35 +4,32 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.alpakka.ses.scaladsl.SesPublisher
-import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.scaladsl.Flow
 import com.amazonaws.services.simpleemail.model._
 import com.amazonaws.services.simpleemail.{AmazonSimpleEmailServiceAsync, AmazonSimpleEmailServiceAsyncClientBuilder}
 import io.lemonlabs.iota.alerter.feed.TangleUpdate
-import io.lemonlabs.iota.alerter.subscribe.AlertSubscription
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
-case class EmailAlert(subscription: AlertSubscription, tangleUpdate: TangleUpdate) {
-  require (
-    subscription.iotaAddress == tangleUpdate.address,
-    s"Cannot send alert, subscription is for ${subscription.iotaAddress}, not ${tangleUpdate.address}"
-  )
-}
+case class EmailAlert(email: String, tangleUpdate: TangleUpdate)
 
 class EmailSender()(implicit system: ActorSystem, materializer: Materializer) {
 
   implicit val sesClient: AmazonSimpleEmailServiceAsync =
     AmazonSimpleEmailServiceAsyncClientBuilder.defaultClient()
 
-  //: Sink[EmailAlert, NotUsed]
-  val emailFlow =
-    Flow[EmailAlert].map { case EmailAlert(sub, tangleUpdate) =>
-      println("Emailing " + sub.email)
+  type EmailFlow = Flow[EmailAlert, Try[SendEmailResult], NotUsed]
+
+  val emailFlow: EmailFlow =     emailFlow(subject = tu => s"${tu.value} IOTA received")
+  val smokeTestFlow: EmailFlow = emailFlow(subject = _  => s"IOTA Alerter Successfully Deployed!")
+
+  def emailFlow(subject: TangleUpdate => String): EmailFlow =
+    Flow[EmailAlert].map { case EmailAlert(email, tangleUpdate) =>
       new SendEmailRequest(
         "iota@lemonlabs.io",
-        new Destination().withToAddresses(sub.email),
+        new Destination().withToAddresses(email),
         new Message(
-          new Content(s"${tangleUpdate.value} IOTA received"),
+          new Content(subject(tangleUpdate)),
           new Body()
             .withHtml(new Content(html.tangle_update_email(tangleUpdate).toString))
             .withText(new Content(txt.tangle_update_email(tangleUpdate).toString))
