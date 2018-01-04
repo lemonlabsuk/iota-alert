@@ -1,0 +1,54 @@
+@(tangleUpdate: io.lemonlabs.iota.alerter.feed.TangleUpdate)
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+</head>
+<body>
+    <h1>@tangleUpdate.value IOTAs received</h1>
+
+    <p>
+        The IOTA address <code>@tangleUpdate.address</code> has received @tangleUpdate.value IOTAs!
+    </p>
+
+    <table class="table table-sm">
+        <tbody>
+        <tr>
+            <th scope="row">Address</th>
+            <td><code>@tangleUpdate.address</code></td>
+        </tr>
+        <tr>
+            <th scope="row">Amount</th>
+            <td><code>@tangleUpdate.value</code></td>
+        </tr>
+        <tr>
+            <th scope="row">Tag</th>
+            <td><code>@tangleUpdate.tag</code></td>
+        </tr>
+        <tr>
+            <th scope="row">Time</th>
+            <td><code>@tangleUpdate.timestamp</code></td>
+        </tr>
+        <tr>
+            <th scope="row">Arrival Time</th>
+            <td><code>@tangleUpdate.arrivalTime</code></td>
+        </tr>
+        <tr>
+            <th scope="row">Trunk Transaction</th>
+            <td><code>@tangleUpdate.trunkTransaction</code></td>
+        </tr>
+        <tr>
+            <th scope="row">Branch Transaction</th>
+            <td><code>@tangleUpdate.branchTransaction</code></td>
+        </tr>
+        </tbody>
+    </table>
+</body>
+</html>

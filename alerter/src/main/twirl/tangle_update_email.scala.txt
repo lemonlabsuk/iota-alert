@@ -1,0 +1,16 @@
+@(tangleUpdate: io.lemonlabs.iota.alerter.feed.TangleUpdate)
+==================================
+
+@tangleUpdate.value IOTAs received
+
+==================================
+
+The IOTA address <code>@tangleUpdate.address</code> has received @tangleUpdate.value IOTAs!
+
+           Address: @tangleUpdate.address
+            Amount: @tangleUpdate.value
+               Tag: @tangleUpdate.tag:
+              Time: @tangleUpdate.timestamp
+      Arrival Time: @tangleUpdate.arrivalTime
+ Trunk Transaction: @tangleUpdate.trunkTransaction
+Branch Transaction: @tangleUpdate.branchTransaction

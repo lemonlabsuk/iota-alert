@@ -1,38 +1,44 @@
 package io.lemonlabs.iota.alerter
 
-import akka.Done
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
-import akka.stream.scaladsl.{Flow, Keep, Sink}
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.http.scaladsl.Http
+import akka.stream._
+import akka.stream.scaladsl.Sink
+import io.lemonlabs.iota.alerter.email.EmailSender
+import io.lemonlabs.iota.alerter.feed.BloxTangleWebSocket
+import io.lemonlabs.iota.alerter.subscribe.DynamoDbSubscriber
+import io.lemonlabs.rest.RestApi
 
-import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 object Main extends App {
+
+  val decider: Supervision.Decider = t => {
+    t.printStackTrace()
+    Supervision.Resume
+  }
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: Materializer = ActorMaterializer()
   import system.dispatcher
 
-  val flow = new BloxTangleWebSocket().transactionUpdates()
+  val tangleUpdates = new BloxTangleWebSocket
+  val dynamoDbSubscriber = new DynamoDbSubscriber
+  val emailSender = new EmailSender
 
-  // print each incoming strict text message
-  val printSink: Sink[TransactionUpdate, Future[Done]] =
-    Sink.foreach(println)
+  val restApi = new RestApi(dynamoDbSubscriber)
+  val bindingFuture = Http().bindAndHandle(restApi.route, "0.0.0.0", 8080)
 
-  val upgradeResponse = flow.to(printSink).run()
-
-  val connected = upgradeResponse.map { upgrade =>
-    // just like a regular http request we can access response status which is available via upgrade.response.status
-    // status code 101 (Switching Protocols) indicates that server support WebSockets
-    if (upgrade.response.status == StatusCodes.SwitchingProtocols) {
-      Done
-    } else {
-      throw new RuntimeException(s"Connection failed: ${upgrade.response.status}")
-    }
+  bindingFuture.foreach { binding =>
+    println(s"Bound to ${binding.localAddress}")
   }
 
-  // in a real application you would not side effect here
-  // and handle errors more carefully
-  connected.onComplete(_ => println("Connected"))
+  tangleUpdates.tangleUpdatesFeed
+    .flatMapConcat(dynamoDbSubscriber.findSubscriptionsForTangleUpdate)
+    .via(emailSender.emailFlow)
+    .to(Sink.foreach {
+      case Success(res) => println("Email successfully sent")
+      case Failure(ex) => ex.printStackTrace()
+    })
+    .run()
 }
