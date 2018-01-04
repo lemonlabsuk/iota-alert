@@ -18,7 +18,7 @@ sed -i '' "s/$VER/$NEW_VER/g" version.sbt
 # Run tests and package new JAR
 set +e
 sbt assembly
-if [ $? -neq 0 ]; then
+if [ $? -ne 0 ]; then
   echo "sbt assembly failed! Reverting back to version $VER!"
   git checkout version.sbt
   exit 1
@@ -27,7 +27,7 @@ set -e
 
 # Commit new version to git!
 git commit -am"Bump website to version $NEW_VER"
-git tag $NEW_VER
+git tag website-$NEW_VER
 
 # Upload to S3
 aws s3 cp "target/scala-2.12/iota-alert-website-assembly-$NEW_VER.jar" "s3://iota-alert-releases/iota-alert-website-$NEW_VER.jar"
