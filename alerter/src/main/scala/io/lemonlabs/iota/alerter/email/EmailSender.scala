@@ -20,16 +20,14 @@ class EmailSender()(implicit system: ActorSystem, materializer: Materializer) {
 
   type EmailFlow = Flow[EmailAlert, Try[SendEmailResult], NotUsed]
 
-  val emailFlow: EmailFlow =     emailFlow(subject = tu => s"${tu.value} IOTA received")
-  val smokeTestFlow: EmailFlow = emailFlow(subject = _  => s"IOTA Alerter Successfully Deployed!")
-
-  def emailFlow(subject: TangleUpdate => String): EmailFlow =
+  val emailFlow: EmailFlow =
     Flow[EmailAlert].map { case EmailAlert(email, tangleUpdate) =>
+      println("Sending email for " + tangleUpdate.address)
       new SendEmailRequest(
         "iota@lemonlabs.io",
         new Destination().withToAddresses(email),
         new Message(
-          new Content(subject(tangleUpdate)),
+          new Content(tangleUpdate.emailSubject.getOrElse(s"${tangleUpdate.value} IOTA received")),
           new Body()
             .withHtml(new Content(html.tangle_update_email(tangleUpdate).toString))
             .withText(new Content(txt.tangle_update_email(tangleUpdate).toString))

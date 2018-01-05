@@ -2,6 +2,10 @@
 
 set -e
 
+if [ -z "$1" ]; then
+    echo "Please pass environment name as argument"
+fi
+
 if [ ! -z "$(git status -s)" ]; then
     echo "You have uncommitted changes. Cannot release!"
     exit 1
@@ -34,4 +38,4 @@ git push --tags origin master
 aws s3 cp "target/scala-2.12/iota-alerter-assembly-$NEW_VER.jar" "s3://iota-alert-releases/iota-alerter-$NEW_VER.jar"
 
 # Deploy!
-../cloudformation/deploy_alerter.sh
+../cloudformation/deploy_alerter.sh -e $1 -v $NEW_VER

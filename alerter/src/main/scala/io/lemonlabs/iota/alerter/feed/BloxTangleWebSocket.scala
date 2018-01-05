@@ -1,5 +1,7 @@
 package io.lemonlabs.iota.alerter.feed
 
+import java.util.concurrent.TimeUnit
+
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -10,6 +12,7 @@ import akka.stream.scaladsl._
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.Future
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 case class TangleUpdate(hash: String,
                         address: String,
@@ -21,12 +24,13 @@ case class TangleUpdate(hash: String,
                         bundleHash: String,
                         trunkTransaction: String,
                         branchTransaction: String,
-                        arrivalTime: String)
+                        arrivalTime: String,
+                        emailSubject: Option[String] = None)
 object TangleUpdate {
 
   import DefaultJsonProtocol._
 
-  implicit val fmt: RootJsonFormat[TangleUpdate] = jsonFormat11(TangleUpdate.apply)
+  implicit val fmt: RootJsonFormat[TangleUpdate] = jsonFormat12(TangleUpdate.apply)
 }
 
 class BloxTangleWebSocket {
@@ -50,6 +54,24 @@ class BloxTangleWebSocket {
       case TextMessage.Strict(text) =>
         import spray.json._
         val update = text.parseJson.convertTo[TangleUpdate]
+
+        if(update.value > 0) {
+          println("=======")
+          println(update.address)
+          println(update.value)
+          println(update.bundleHash)
+          println(update.hash)
+
+          def Dur(epochMillis: String, unit: TimeUnit) = {
+            val now = Duration(System.currentTimeMillis, TimeUnit.MILLISECONDS)
+            val event = Duration(epochMillis.toLong, unit)
+            now - event
+          }
+
+          println(Dur(update.arrivalTime, TimeUnit.MILLISECONDS).toMillis + "ms ago")
+          println(Dur(update.timestamp, TimeUnit.SECONDS).toHours + "hrs ago")
+        }
+
         update
       case other =>
         throw new IllegalArgumentException(s"Invalid message: $other")

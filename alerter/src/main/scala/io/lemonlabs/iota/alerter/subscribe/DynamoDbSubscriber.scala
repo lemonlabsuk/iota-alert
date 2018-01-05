@@ -30,11 +30,18 @@ class DynamoDbSubscriber()(implicit system: ActorSystem, materializer: Materiali
       .toOp
     )
     .via(client.flow)
-    .mapConcat(_.getItems.asScala.toVector)
-    .map(result => EmailAlert(result.get("Email").getS, tangleUpdate))
+    .mapConcat(res => unmarshallQueryAlerts(res, tangleUpdate))
     .recoverWithRetries(1, {
       case t: Throwable =>
         t.printStackTrace()
+        // If the DynamoDB query fails, log and don't return any results
         Source.empty
     })
+
+  def unmarshallQueryAlerts(results: QueryResult, tangleUpdate: TangleUpdate) =
+    for {
+      res <- results.getItems.asScala.toVector
+      email <- res.asScala.get("Email")
+    }
+    yield EmailAlert(email.getS, tangleUpdate)
 }
