@@ -38,4 +38,6 @@ git push --tags origin master
 aws s3 cp "target/scala-2.12/iota-alerter-assembly-$NEW_VER.jar" "s3://iota-alert-releases/iota-alerter-$NEW_VER.jar"
 
 # Deploy!
-../cloudformation/deploy_alerter.sh -e $1 -v $NEW_VER
+cd ../cloudformation
+./deploy_alerter.sh -e $1 -v $NEW_VER
+cd -
