@@ -1,0 +1,142 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+
+  "Description": "IOTA Alert Alerter",
+
+  "Parameters": {
+    "Vpc": {
+      "Type": "String",
+      "Description": ""
+    },
+    "Subnet": {
+      "Type": "String",
+      "Description": ""
+    },
+    "AlerterVersion": {
+      "Type": "String"
+    }
+  },
+
+  "Mappings": {
+  },
+
+  "Resources": {
+
+    "AlerterSecurityGroup": {
+       "Type": "AWS::EC2::SecurityGroup",
+       "Properties":
+       {
+          "GroupDescription": "Allow SSH access to IOTA Alerter",
+          "SecurityGroupEgress": [
+            { "CidrIp": "0.0.0.0/0", "FromPort": 0, "ToPort": 65535, "IpProtocol": "tcp" }
+          ],
+          "SecurityGroupIngress": [
+            { "CidrIp": "0.0.0.0/0", "FromPort": 22, "ToPort": 22, "IpProtocol": "tcp" }
+          ],
+          "Tags": [ { "Key": "Name", "Value": { "Fn::Join": [ " ", [ "Alerter", { "Ref": "AWS::StackName"} ] ] } } ],
+          "VpcId": { "Ref": "Vpc" }
+        }
+    },
+
+    "AlerterRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+           "Version" : "2012-10-17",
+           "Statement": [ {
+              "Effect": "Allow",
+              "Principal": {
+                 "Service": [ "ec2.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+           } ]
+        },
+        "Policies": [{
+            "PolicyName": "DownloadRelease",
+            "PolicyDocument": {
+              "Version" : "2012-10-17",
+              "Statement": [ {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::iota-alert-releases/*"
+              } ]
+            }
+          },
+          {
+            "PolicyName": "DynamoDBQuery",
+            "PolicyDocument": {
+              "Version" : "2012-10-17",
+              "Statement": [ {
+                "Effect": "Allow",
+                "Action": "dynamodb:Query",
+                "Resource": {
+                  "Fn::Join": [ ":", [ 
+                    "arn:aws:dynamodb", 
+                    { "Ref": "AWS::Region" }, 
+                    { "Ref": "AWS::AccountId" }, 
+                    "table/iota-alert-subscriptions" 
+                  ] ]
+                }
+              } ]
+            }
+          },
+          {
+            "PolicyName": "SesSendEmailPolicy",
+            "PolicyDocument": {
+              "Version" : "2012-10-17",
+              "Statement": [ {
+                "Effect": "Allow",
+                "Action": "ses:SendEmail",
+                "Resource":"*"
+              } ]
+            }
+          }
+        ]
+      }
+    },
+
+    "AlerterInstanceProfile": {
+       "Type": "AWS::IAM::InstanceProfile",
+       "Properties": {
+          "Path": "/",
+          "Roles": [
+            { "Ref": "AlerterRole" }
+          ]
+       }
+    },
+
+    "AlerterAsg": {
+       "Type" : "AWS::AutoScaling::AutoScalingGroup",
+       "Properties" : {
+          "LaunchConfigurationName" : { "Ref": "AlerterLaunchConfiguration" },
+          "MaxSize": 1,
+          "MinSize": 1,
+          "VPCZoneIdentifier": [ { "Ref": "Subnet" } ]
+       }
+    },
+
+    "AlerterLaunchConfiguration": {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "InstanceType": "t2.nano",
+        "AssociatePublicIpAddress": true,
+        "IamInstanceProfile": { "Ref": "AlerterInstanceProfile" },
+        "ImageId": "ami-1a962263",
+        "KeyName": "ian pub key",
+        "SecurityGroups": [ { "Ref": "AlerterSecurityGroup" } ],
+        "UserData": { "Fn::Base64" : {
+          "Fn::Join": [ "", [
+            "#!/usr/bin/env bash\n",
+            "sudo yum install -y java-1.8.0\n",
+            "sudo yum remove -y java-1.7.0-openjdk\n",
+            "aws s3 cp s3://iota-alert-releases/iota-alerter-", { "Ref": "AlerterVersion" }, ".jar ~\n",
+            "echo 'description \"IOTA Alerter\"' > /etc/init/iotaalerter.conf\n",
+            "echo 'exec java -jar ~/iota-alerter-", { "Ref": "AlerterVersion" }, ".jar 2>&1 > /var/log/iotaalerter.log' >> /etc/init/iotaalerter.conf\n",
+            "echo 'start on startup' >> /etc/init/iotaalerter.conf\n",
+            "initctl start iotaalerter\n"
+          ] ]
+        }  }
+      }
+    }
+  }
+}
