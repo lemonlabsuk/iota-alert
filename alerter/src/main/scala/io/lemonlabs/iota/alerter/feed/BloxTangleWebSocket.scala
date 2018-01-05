@@ -54,24 +54,6 @@ class BloxTangleWebSocket {
       case TextMessage.Strict(text) =>
         import spray.json._
         val update = text.parseJson.convertTo[TangleUpdate]
-
-        if(update.value > 0) {
-          println("=======")
-          println(update.address)
-          println(update.value)
-          println(update.bundleHash)
-          println(update.hash)
-
-          def Dur(epochMillis: String, unit: TimeUnit) = {
-            val now = Duration(System.currentTimeMillis, TimeUnit.MILLISECONDS)
-            val event = Duration(epochMillis.toLong, unit)
-            now - event
-          }
-
-          println(Dur(update.arrivalTime, TimeUnit.MILLISECONDS).toMillis + "ms ago")
-          println(Dur(update.timestamp, TimeUnit.SECONDS).toHours + "hrs ago")
-        }
-
         update
       case other =>
         throw new IllegalArgumentException(s"Invalid message: $other")
