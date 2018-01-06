@@ -1,4 +1,4 @@
-@(tangleUpdate: io.lemonlabs.iota.alerter.feed.TangleUpdate)
+@(tangleUpdate: io.lemonlabs.iota.alerter.feed.Transaction)
 <!doctype html>
 <html lang="en">
 <head>
@@ -33,12 +33,8 @@
             <td><code>@tangleUpdate.tag</code></td>
         </tr>
         <tr>
-            <th scope="row">Time</th>
-            <td><code>@tangleUpdate.timestamp</code></td>
-        </tr>
-        <tr>
-            <th scope="row">Arrival Time</th>
-            <td><code>@tangleUpdate.arrivalTime</code></td>
+            <th scope="row">Received At</th>
+            <td><code>@tangleUpdate.receivedAt</code></td>
         </tr>
         <tr>
             <th scope="row">Trunk Transaction</th>

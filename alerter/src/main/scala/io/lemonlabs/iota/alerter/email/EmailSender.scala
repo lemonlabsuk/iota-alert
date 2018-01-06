@@ -7,11 +7,11 @@ import akka.stream.alpakka.ses.scaladsl.SesPublisher
 import akka.stream.scaladsl.Flow
 import com.amazonaws.services.simpleemail.model._
 import com.amazonaws.services.simpleemail.{AmazonSimpleEmailServiceAsync, AmazonSimpleEmailServiceAsyncClientBuilder}
-import io.lemonlabs.iota.alerter.feed.TangleUpdate
+import io.lemonlabs.iota.alerter.feed.Transaction
 
 import scala.util.{Failure, Success, Try}
 
-case class EmailAlert(email: String, tangleUpdate: TangleUpdate)
+case class EmailAlert(email: String, tangleUpdate: Transaction)
 
 class EmailSender()(implicit system: ActorSystem, materializer: Materializer) {
 

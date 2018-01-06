@@ -24,8 +24,9 @@ class DynamoDbSubscriber()(implicit system: ActorSystem, materializer: Materiali
     Source.single(new PutItemRequest()
       .withTableName(tableName)
       .withItem(Map(
-        "IotaAddress" -> new AttributeValue(subscription.iotaAddress),
-        "Email" -> new AttributeValue(subscription.email)
+        "IotaAddress" -> new AttributeValue(subscription.iotaAddress.take(81)),
+        "Email" -> new AttributeValue(subscription.email),
+        "FullIotaAddress" -> new AttributeValue(subscription.iotaAddress)
       ).asJava)
       .toOp
     )

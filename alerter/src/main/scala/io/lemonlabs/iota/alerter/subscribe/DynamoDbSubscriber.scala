@@ -7,7 +7,7 @@ import akka.stream.alpakka.dynamodb.scaladsl.{DynamoClient, DynamoImplicits}
 import akka.stream.scaladsl.Source
 import com.amazonaws.services.dynamodbv2.model._
 import io.lemonlabs.iota.alerter.email.EmailAlert
-import io.lemonlabs.iota.alerter.feed.TangleUpdate
+import io.lemonlabs.iota.alerter.feed.Transaction
 
 import scala.collection.JavaConverters._
 
@@ -21,7 +21,7 @@ class DynamoDbSubscriber()(implicit system: ActorSystem, materializer: Materiali
 
   val tableName = "iota-alert-subscriptions"
 
-  def findSubscriptionsForTangleUpdate(tangleUpdate: TangleUpdate) =
+  def findSubscriptionsForTangleUpdate(tangleUpdate: Transaction) =
     Source.single(new QueryRequest()
       .withTableName(tableName)
       .withConsistentRead(false)
@@ -38,10 +38,11 @@ class DynamoDbSubscriber()(implicit system: ActorSystem, materializer: Materiali
         Source.empty
     })
 
-  def unmarshallQueryAlerts(results: QueryResult, tangleUpdate: TangleUpdate) =
+  def unmarshallQueryAlerts(results: QueryResult, tangleUpdate: Transaction) = {
     for {
       res <- results.getItems.asScala.toVector
       email <- res.asScala.get("Email")
     }
     yield EmailAlert(email.getS, tangleUpdate)
+  }
 }
